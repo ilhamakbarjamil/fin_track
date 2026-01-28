@@ -4,6 +4,7 @@ import 'package:fin_track/utils/theme.dart';
 import 'package:fin_track/utils/currency_format.dart';
 import 'package:fin_track/providers/transaction_provider.dart';
 import 'package:fin_track/screens/add_transaction_screen.dart';
+import 'package:fin_track/screens/transaction_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -130,31 +131,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
         scrollDirection: Axis.horizontal,
         itemCount: provider.wallets.length,
         itemBuilder: (context, index) {
-          final wallet = provider.wallets[index];
-          return Container(
-            width: 140,
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.all(12),
+        final item = provider.recentTransactions[index];
+        final isExpense = item['type'] == 2;
+
+        // BUNGKUS DENGAN INKWELL AGAR BISA DIKLIK
+        return InkWell(
+          onTap: () {
+            // Navigasi ke Halaman Detail
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TransactionDetailScreen(transaction: item),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
+              // ... (Isi Row sama persis kayak sebelumnya, jangan diubah isinya) ...
               children: [
-                Icon(Icons.account_balance_wallet, color: kSecondaryColor),
-                const SizedBox(height: 8),
-                Text(wallet['name'], style: blackTextStyle.copyWith(fontWeight: FontWeight.w600)),
+                // Icon Kategori
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isExpense ? Colors.red.shade50 : Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    isExpense ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: isExpense ? Colors.red : Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Detail
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['category_name'] ?? 'Umum', 
+                        style: blackTextStyle.copyWith(fontWeight: FontWeight.bold)
+                      ),
+                      Text(
+                        item['wallet_name'] ?? '-', 
+                        style: greyTextStyle.copyWith(fontSize: 12)
+                      ),
+                    ],
+                  ),
+                ),
+                // Nominal
                 Text(
-                  CurrencyFormat.convertToIdr(wallet['balance'], 0),
-                  style: greyTextStyle.copyWith(fontSize: 12),
+                  (isExpense ? "- " : "+ ") + CurrencyFormat.convertToIdr(item['amount'], 0),
+                  style: blackTextStyle.copyWith(
+                    color: isExpense ? kExpenseColor : kIncomeColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+        );
+      },
       ),
     );
   }

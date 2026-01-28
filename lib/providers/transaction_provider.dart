@@ -5,10 +5,13 @@ class TransactionProvider with ChangeNotifier {
   // List penampung data untuk ditampilkan di UI
   List<Map<String, dynamic>> _wallets = [];
   List<Map<String, dynamic>> _recentTransactions = [];
-  
+
   // Getter (supaya UI bisa ambil data)
   List<Map<String, dynamic>> get wallets => _wallets;
   List<Map<String, dynamic>> get recentTransactions => _recentTransactions;
+
+  List<Map<String, dynamic>> _goals = [];
+  List<Map<String, dynamic>> get goals => _goals;
 
   // Hitung Total Harta (Semua saldo dompet dijumlah)
   int get totalBalance {
@@ -25,9 +28,8 @@ class TransactionProvider with ChangeNotifier {
   Future<void> loadData() async {
     _wallets = await DatabaseHelper.instance.getWallets();
     _recentTransactions = await DatabaseHelper.instance.getRecentTransactions();
-    
-    // Memberitahu UI bahwa data sudah berubah (Refresh otomatis)
-    notifyListeners(); 
+    _goals = await DatabaseHelper.instance.getGoals(); // <--- TAMBAHAN
+    notifyListeners();
   }
 
   // 2. Tambah Transaksi
@@ -39,7 +41,6 @@ class TransactionProvider with ChangeNotifier {
     String? description,
     required DateTime date,
   }) async {
-    
     Map<String, dynamic> row = {
       'wallet_id': walletId,
       'amount': amount,
@@ -50,8 +51,38 @@ class TransactionProvider with ChangeNotifier {
     };
 
     await DatabaseHelper.instance.addTransaction(row);
-    
+
     // Refresh data setelah nambah biar saldo langsung update
+    await loadData();
+  }
+
+  // 3. Tambah Goal Baru
+  Future<void> addGoal(String name, int targetAmount) async {
+    await DatabaseHelper.instance.addGoal({
+      'name': name,
+      'target_amount': targetAmount,
+      'current_amount': 0,
+      'is_achieved': 0,
+    });
+    await loadData(); // Refresh UI
+  }
+
+  // 4. Nabung (Top Up)
+  Future<void> topUpGoal(int goalId, int amount, int walletId) async {
+    await DatabaseHelper.instance.topUpGoal(goalId, amount, walletId);
+
+    // Kita catat juga di riwayat transaksi biar ada jejaknya
+    // "Nabung ke [Goal ID]" dianggap Pengeluaran dari Wallet
+    await DatabaseHelper.instance.addTransaction({
+      'wallet_id': walletId,
+      'amount': amount,
+      'type': 2, // Pengeluaran
+      'category_id':
+          null, // Kategori null atau bisa buat kategori khusus "Tabungan"
+      'description': 'Tabungan Goal #$goalId',
+      'date': DateTime.now().toIso8601String(),
+    });
+
     await loadData();
   }
 }

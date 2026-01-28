@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart'; // Import Provider
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/theme.dart';
+import 'providers/transaction_provider.dart';
 import 'screens/dashboard_screen.dart';
-import 'providers/transaction_provider.dart'; // Import Provider Kita
+import 'screens/onboarding_screen.dart'; // Import layar baru
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +20,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // BUNGKUS DENGAN MULTIPROVIDER
     return MultiProvider(
       providers: [
-        // Daftarkan Provider disini
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
       ],
       child: MaterialApp(
@@ -35,9 +35,51 @@ class MyApp extends StatelessWidget {
             Theme.of(context).textTheme,
           ),
         ),
-        // Nanti kita ganti ini ke DashboardScreen
-        home: const DashboardScreen(),
+        // GUNAKAN SPLASH SCREEN CHECKER DI SINI
+        home: const AuthCheck(),
       ),
     );
+  }
+}
+
+// Widget Pengecek Status User
+class AuthCheck extends StatefulWidget {
+  const AuthCheck({super.key});
+
+  @override
+  State<AuthCheck> createState() => _AuthCheckState();
+}
+
+class _AuthCheckState extends State<AuthCheck> {
+  bool? isFirstRun;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  void _checkStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Default true jika belum pernah dibuka
+    setState(() {
+      isFirstRun = prefs.getBool('is_first_run') ?? true; 
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Masih Loading cek data
+    if (isFirstRun == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // 2. Jika First Run -> Ke Onboarding
+    if (isFirstRun == true) {
+      return const OnboardingScreen();
+    }
+
+    // 3. Jika User Lama -> Ke Dashboard
+    return const DashboardScreen();
   }
 }

@@ -53,15 +53,28 @@ class TransactionDetailScreen extends StatelessWidget {
                 child: const Icon(Icons.check, color: Colors.green, size: 30),
               ),
               const SizedBox(height: 16),
-              Text("Transaksi Berhasil", style: blackTextStyle.copyWith(fontSize: 16, fontWeight: FontWeight.bold)),
-              
+              Text(
+                "Transaksi Berhasil",
+                style: blackTextStyle.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
               const SizedBox(height: 24),
-              
+
               // 2. Nominal
-              Text(amount, style: blackTextStyle.copyWith(fontSize: 32, fontWeight: FontWeight.bold, color: isExpense ? kExpenseColor : kIncomeColor)),
-              
+              Text(
+                amount,
+                style: blackTextStyle.copyWith(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: isExpense ? kExpenseColor : kIncomeColor,
+                ),
+              ),
+
               const SizedBox(height: 24),
-              const Divider(thickness: 1, dashPattern: [5, 5]),
+              const Divider(thickness: 1, color: Colors.grey),
               const SizedBox(height: 24),
 
               // 3. Detail
@@ -81,11 +94,16 @@ class TransactionDetailScreen extends StatelessWidget {
                     PdfInvoiceService.generateAndPrintInvoice(transaction);
                   },
                   icon: const Icon(Icons.share, color: Colors.white),
-                  label: const Text("Bagikan / Simpan PDF", style: TextStyle(color: Colors.white)),
+                  label: const Text(
+                    "Bagikan / Simpan PDF",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -103,7 +121,10 @@ class TransactionDetailScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: greyTextStyle),
-          Text(value, style: blackTextStyle.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: blackTextStyle.copyWith(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

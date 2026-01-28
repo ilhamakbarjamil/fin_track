@@ -164,6 +164,62 @@ class DatabaseHelper {
     ''');
   }
 
+  // --- FITUR GOALS / TABUNGAN ---
+
+  // 5. Ambil Semua Data Goals
+  Future<List<Map<String, dynamic>>> getGoals() async {
+    final db = await instance.database;
+    // Urutkan yang belum tercapai (is_achieved = 0) di atas
+    return await db.query('goals', orderBy: 'is_achieved ASC, id DESC');
+  }
+
+  // 6. Tambah Goal Baru
+  Future<int> addGoal(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('goals', row);
+  }
+
+  // 7. Top Up Tabungan (Nabung)
+  Future<void> topUpGoal(int goalId, int amount, int walletId) async {
+    final db = await instance.database;
+
+    // A. Kurangi Saldo Dompet Sumber (Misal: BCA berkurang)
+    await db.rawUpdate(
+      'UPDATE wallets SET balance = balance - ? WHERE id = ?',
+      [amount, walletId],
+    );
+
+    // B. Tambah Saldo di Goal (Tabungan bertambah)
+    await db.rawUpdate(
+      'UPDATE goals SET current_amount = current_amount + ? WHERE id = ?',
+      [amount, goalId],
+    );
+
+    // C. Cek apakah sudah capai target?
+    // (Opsional: Logic ini bisa ditaruh di Provider, tapi disini biar simple)
+  }
+
+  // --- FITUR ONBOARDING / SETUP ---
+
+  // 8. Update Saldo Langsung (Untuk Setup Awal)
+  Future<void> setWalletBalance(int id, int amount) async {
+    final db = await instance.database;
+    await db.rawUpdate('UPDATE wallets SET balance = ? WHERE id = ?', [
+      amount,
+      id,
+    ]);
+  }
+
+  // 9. Tambah Dompet Baru (Misal user mau tambah BCA/OVO saat setup)
+  Future<int> addWallet(String name, int balance) async {
+    final db = await instance.database;
+    return await db.insert('wallets', {
+      'name': name,
+      'balance': balance,
+      'icon': 1, // Icon default bank
+    });
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

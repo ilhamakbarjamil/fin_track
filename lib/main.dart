@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import 'utils/theme.dart';
+import 'providers/transaction_provider.dart'; // Import Provider Kita
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Inisialisasi format tanggal Indonesia
   await initializeDateFormatting('id_ID', null);
   
   runApp(const MyApp());
@@ -15,22 +17,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FinTrack',
-      theme: ThemeData(
-        // Kita set warna utama jadi Navy Blue (ala Bank)
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: Colors.grey[100], // Background agak abu terang
-        useMaterial3: true,
-        // Set font default jadi Poppins/Roboto biar modern
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
+    // BUNGKUS DENGAN MULTIPROVIDER
+    return MultiProvider(
+      providers: [
+        // Daftarkan Provider disini
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'FinTrack',
+        theme: ThemeData(
+          primarySwatch: Colors.indigo,
+          scaffoldBackgroundColor: Colors.grey[100],
+          useMaterial3: true,
+          textTheme: GoogleFonts.poppinsTextTheme(
+            Theme.of(context).textTheme,
+          ),
         ),
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Text("Setup Project Berhasil!"),
+        // Nanti kita ganti ini ke DashboardScreen
+        home: const Scaffold(
+           body: Center(child: Text("Logic Provider Siap!")),
         ),
       ),
     );

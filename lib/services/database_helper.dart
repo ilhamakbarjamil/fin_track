@@ -17,11 +17,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
   Future _createDB(Database db, int version) async {
@@ -82,24 +78,92 @@ class DatabaseHelper {
 
     // --- SEED DATA (Data Awal) ---
     // Masukkan data default biar aplikasi tidak kosong melompong saat install
-    
+
     // Default Wallet
-    await db.rawInsert('INSERT INTO wallets(name, balance, icon) VALUES("Tunai", 0, 0)');
-    
+    await db.rawInsert(
+      'INSERT INTO wallets(name, balance, icon) VALUES("Tunai", 0, 0)',
+    );
+
     // Default Categories - Pengeluaran (Type 2)
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Makan & Minum", 2, 0)');
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Transportasi", 2, 1)');
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Belanja", 2, 2)');
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Tagihan", 2, 3)');
-    
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Makan & Minum", 2, 0)',
+    );
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Transportasi", 2, 1)',
+    );
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Belanja", 2, 2)',
+    );
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Tagihan", 2, 3)',
+    );
+
     // Default Categories - Pemasukan (Type 1)
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Gaji", 1, 4)');
-    await db.rawInsert('INSERT INTO categories(name, type, icon) VALUES("Bonus", 1, 5)');
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Gaji", 1, 4)',
+    );
+    await db.rawInsert(
+      'INSERT INTO categories(name, type, icon) VALUES("Bonus", 1, 5)',
+    );
   }
 
   // --- CRUD METHODS (Fungsi Dasar) ---
-  // Nanti kita isi fungsi Tambah/Hapus di sini saat masuk tahap Logic
-  
+
+  // 1. Ambil Semua Data Dompet
+  Future<List<Map<String, dynamic>>> getWallets() async {
+    final db = await instance.database;
+    return await db.query('wallets');
+  }
+
+  // 2. Ambil Semua Data Kategori
+  Future<List<Map<String, dynamic>>> getCategories(int type) async {
+    // type: 1 = Pemasukan, 2 = Pengeluaran
+    final db = await instance.database;
+    return await db.query('categories', where: 'type = ?', whereArgs: [type]);
+  }
+
+  // 3. Tambah Transaksi Baru (Dan Update Saldo Dompet)
+  Future<int> addTransaction(Map<String, dynamic> row) async {
+    final db = await instance.database;
+
+    // a. Simpan Transaksi
+    final id = await db.insert('transactions', row);
+
+    // b. Update Saldo Dompet Otomatis
+    int walletId = row['wallet_id'];
+    int amount = row['amount'];
+    int type = row['type']; // 1 = Masuk, 2 = Keluar
+
+    // Logika: Kalau Pemasukan (1) saldo nambah, Kalau Pengeluaran (2) saldo kurang
+    if (type == 1) {
+      await db.rawUpdate(
+        'UPDATE wallets SET balance = balance + ? WHERE id = ?',
+        [amount, walletId],
+      );
+    } else {
+      await db.rawUpdate(
+        'UPDATE wallets SET balance = balance - ? WHERE id = ?',
+        [amount, walletId],
+      );
+    }
+
+    return id;
+  }
+
+  // 4. Ambil 5 Transaksi Terakhir (Untuk Dashboard)
+  Future<List<Map<String, dynamic>>> getRecentTransactions() async {
+    final db = await instance.database;
+    // Join tabel biar kita dapat nama Kategori dan nama Wallet, bukan cuma ID-nya
+    return await db.rawQuery('''
+      SELECT t.*, c.name as category_name, c.icon as category_icon, w.name as wallet_name 
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN wallets w ON t.wallet_id = w.id
+      ORDER BY t.date DESC
+      LIMIT 5
+    ''');
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart'; // Import Provider
 import 'utils/theme.dart';
+import 'screens/dashboard_screen.dart';
 import 'providers/transaction_provider.dart'; // Import Provider Kita
 
 void main() async {
@@ -35,9 +36,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         // Nanti kita ganti ini ke DashboardScreen
-        home: const Scaffold(
-           body: Center(child: Text("Logic Provider Siap!")),
-        ),
+        home: const DashboardScreen(),
       ),
     );
   }

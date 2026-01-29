@@ -37,15 +37,20 @@ dependencies:
   sqflite: ^2.4.2
   path: ^1.9.1
   provider: ^6.1.5+1
-  intl: ^0.20.2
-  google_fonts: ^8.0.0
+  # intl: ^0.20.2
+  # google_fonts: ^8.0.0
   pdf: ^3.11.3
+  excel: ^4.0.0
   printing: ^5.14.2
   share_plus: ^12.0.1
   path_provider: ^2.1.5
   shared_preferences: ^2.5.4
-  local_auth: ^3.0.0
+  local_auth: ^2.1.6
   flutter_launcher_icons: ^0.14.4
+  google_fonts: ^6.1.0  # Untuk font modern
+  intl: ^0.18.1         # Untuk format Rupiah
+  fl_chart: ^0.65.0     # Untuk grafik nanti
+  percent_indicator: ^4.2.3 
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +73,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

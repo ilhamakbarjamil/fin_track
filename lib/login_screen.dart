@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
-import 'main.dart'; // Import main agar bisa pindah ke Dashboard
+import 'main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,39 +13,41 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final LocalAuthentication auth = LocalAuthentication();
-  
-  // Fungsi Cek & Eksekusi Fingerprint
+
+  // Palet Warna: Deep Corporate Blue & Soft Background
+  final Color primaryColor = const Color(0xFF003366); // Biru Tua BCA
+  final Color accentColor = const Color(0xFF0052D4); // Biru Terang Modern
+  final Color bgColor = const Color(0xFFF9FBFF); // Background Putih Kebiruan
+
   Future<void> _authenticate() async {
     bool authenticated = false;
     try {
-      // Cek apakah HP support biometrik
       final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
-      final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+      final bool canAuthenticate =
+          canAuthenticateWithBiometrics || await auth.isDeviceSupported();
 
       if (!canAuthenticate) {
-        // Jika HP jadul/emulator tanpa fitur fingerprint, langsung masuk (Bypass untuk testing)
         _navigateToDashboard();
         return;
       }
 
-      // Tampilkan Dialog Fingerprint
       authenticated = await auth.authenticate(
-        localizedReason: 'Scan sidik jari untuk masuk',
+        localizedReason: 'Gunakan biometrik untuk keamanan akun Anda',
         options: const AuthenticationOptions(
-          stickyAuth: true, // Agar dialog tidak hilang jika aplikasi ke-pause
-          biometricOnly: false, // Boleh pakai PIN/Pola HP jika jari basah
+          stickyAuth: true,
+          biometricOnly: false,
         ),
       );
     } on PlatformException catch (e) {
-      print(e);
-      // Jika error, tampilkan pesan
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error Biometrik: ${e.message}"))
+        SnackBar(
+          content: Text("Autentikasi Gagal: ${e.message}"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
-    // Jika Berhasil
     if (authenticated) {
       _navigateToDashboard();
     }
@@ -61,72 +63,225 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF003973), Color(0xFF0052D4)], // Biru Corporate
+      backgroundColor: bgColor,
+      body: Stack(
+        children: [
+          // 1. Aksen Background (Lingkaran halus di pojok atas)
+          Positioned(
+            top: -100,
+            right: -50,
+            child: CircleAvatar(
+              radius: 150,
+              backgroundColor: accentColor.withOpacity(0.05),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo / Icon Aplikasi
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.account_balance_wallet, size: 80, color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Sultan Finance",
-              style: GoogleFonts.poppins(
-                fontSize: 28, 
-                fontWeight: FontWeight.bold, 
-                color: Colors.white
-              ),
-            ),
-            Text(
-              "Kelola asetmu dengan elegan",
-              style: GoogleFonts.poppins(
-                fontSize: 14, 
-                color: Colors.white70
-              ),
-            ),
-            const SizedBox(height: 60),
 
-            // Tombol Login
-            ElevatedButton.icon(
-              onPressed: _authenticate,
-              icon: const Icon(Icons.fingerprint, size: 30),
-              label: Text("Masuk dengan Fingerprint", style: GoogleFonts.poppins(fontSize: 16)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF0052D4), // Warna Teks Biru
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 5,
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 60),
+
+                  // 2. Header Branding
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Text(
+                        "Sultan Finance",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: primaryColor,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                  Text(
+                    "Selamat Datang,",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    "Masuk untuk mengelola aset Anda hari ini.",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // 3. Central Fingerprint Area (Elevated Card)
+                  // 3. Central Fingerprint Area (Enhanced Modern Look)
+                  Center(
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _authenticate,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Layer 1: Outer Glowing Aura (Bayangan Biru Halus)
+                              Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: accentColor.withOpacity(0.03),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accentColor.withOpacity(0.1),
+                                      blurRadius: 40,
+                                      spreadRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Layer 2: Animated-style Scanning Ring (Gradasi Border)
+                              Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      accentColor,
+                                      accentColor.withOpacity(0.1),
+                                      accentColor,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(
+                                    2.5,
+                                  ), // Tebal border
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Layer 3: Icon Container dengan Glass Effect
+                              Container(
+                                padding: const EdgeInsets.all(22),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withOpacity(0.08),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.fingerprint_rounded,
+                                  size: 55,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+
+                        // Teks Instruksi yang lebih elegan
+                        Column(
+                          children: [
+                            Text(
+                              "Biometric Login",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Sentuh sensor untuk masuk cepat",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // 4. Action Buttons
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _navigateToDashboard,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Masuk dengan PIN",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        "Lupa PIN atau Masalah Login?",
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.grey[500],
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-            
-            const SizedBox(height: 20),
-            // Opsional: Tombol Login PIN (Dummy)
-            TextButton(
-              onPressed: () {
-                // Logic login PIN (opsional, sementara bypass)
-                 _navigateToDashboard();
-              },
-              child: Text("Gunakan PIN", style: GoogleFonts.poppins(color: Colors.white70)),
-            )
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

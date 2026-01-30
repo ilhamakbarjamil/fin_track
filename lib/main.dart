@@ -224,7 +224,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // 2. Jadwalkan Jam 20:00 (Malam) Setiap Hari
     // Anda bisa ubah angkanya, misal jam 8 pagi (hour: 8, minute: 0)
-    await NotificationHelper.scheduleDailyNotification(hour: 20, minute: 0);
+    await NotificationHelper.scheduleDailyNotification(hour: 23, minute: 10);
   }
 
   // Fungsi mengambil data segar dari Database

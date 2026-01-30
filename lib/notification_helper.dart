@@ -56,4 +56,26 @@ class NotificationHelper {
   static Future requestPermission() async {
     await _notification.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
   }
+
+  // --- FUNGSI TES LANGSUNG (TANPA JADWAL) ---
+  static Future showTestNotification() async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'test_channel', // ID Channel
+      'Test Notification', // Nama Channel
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await _notification.show(
+      888, // ID Bebas
+      'Tes Notifikasi Berhasil! 🎉', 
+      'Sistem notifikasi kamu sudah berjalan lancar.', 
+      platformChannelSpecifics,
+    );
+  }
 }

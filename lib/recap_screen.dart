@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'db_helper.dart';
 
 class RecapScreen extends StatefulWidget {
@@ -12,39 +13,84 @@ class RecapScreen extends StatefulWidget {
 }
 
 class _RecapScreenState extends State<RecapScreen> {
+  List<Map<String, dynamic>> _allTransactions = [];
   double totalIncome = 0;
   double totalExpense = 0;
+  
+  // List Kategori yang sudah diurutkan (Top Pengeluaran)
+  List<Map<String, dynamic>> _topExpenses = [];
+
   bool isLoading = true;
+  DateTime _selectedDate = DateTime.now();
+
+  // Helper untuk warna kategori
+  final Map<String, Color> categoryColors = {
+    'Makanan': Colors.orange, 'Transport': Colors.blue, 'Belanja': Colors.pink,
+    'Tagihan': Colors.red, 'Hiburan': Colors.purple, 'Kesehatan': Colors.teal,
+    'Pendidikan': Colors.indigo, 'Lainnya': Colors.grey,
+  };
 
   @override
   void initState() {
     super.initState();
-    _loadRecapData();
+    initializeDateFormatting('id_ID', null).then((_) {
+      _loadRecapData();
+    });
   }
 
-  // Logic Hitung Data
   void _loadRecapData() async {
-    final transactions = await DatabaseHelper.instance.getTransactions();
-    
+    final data = await DatabaseHelper.instance.getTransactions();
+    if (mounted) {
+      setState(() {
+        _allTransactions = data;
+        isLoading = false;
+        _calculateForSelectedMonth();
+      });
+    }
+  }
+
+  void _calculateForSelectedMonth() {
     double income = 0;
     double expense = 0;
+    Map<String, double> expenseGroup = {}; // Tampung total per kategori
 
-    // Filter data (Bisa dikembangkan jadi filter per bulan nanti)
-    for (var item in transactions) {
-      if (item['type'] == 'IN') {
-        income += item['amount'];
-      } else {
-        expense += item['amount'];
+    for (var item in _allTransactions) {
+      DateTime txDate = DateTime.parse(item['date']);
+      if (txDate.month == _selectedDate.month && txDate.year == _selectedDate.year) {
+        if (item['type'] == 'IN') {
+          income += item['amount'];
+        } else {
+          expense += item['amount'];
+          // Kelompokkan Kategori Pengeluaran
+          String cat = item['category'] ?? 'Lainnya';
+          if (expenseGroup.containsKey(cat)) {
+            expenseGroup[cat] = expenseGroup[cat]! + item['amount'];
+          } else {
+            expenseGroup[cat] = (item['amount'] as int).toDouble();
+          }
+        }
       }
     }
 
-    if (mounted) {
-      setState(() {
-        totalIncome = income;
-        totalExpense = expense;
-        isLoading = false;
-      });
-    }
+    // Urutkan Pengeluaran (Terbesar ke Terkecil)
+    List<Map<String, dynamic>> sortedList = [];
+    expenseGroup.forEach((key, value) {
+      sortedList.add({'category': key, 'amount': value});
+    });
+    sortedList.sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+
+    setState(() {
+      totalIncome = income;
+      totalExpense = expense;
+      _topExpenses = sortedList;
+    });
+  }
+
+  void _changeMonth(int offset) {
+    setState(() {
+      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + offset, 1);
+      _calculateForSelectedMonth();
+    });
   }
 
   String formatRupiah(double number) {
@@ -55,21 +101,16 @@ class _RecapScreenState extends State<RecapScreen> {
   @override
   Widget build(BuildContext context) {
     double totalFlow = totalIncome + totalExpense;
-    // Hindari pembagian dengan nol
-    double incomePercent = totalFlow == 0 ? 0 : (totalIncome / totalFlow) * 100;
-    double expensePercent = totalFlow == 0 ? 0 : (totalExpense / totalFlow) * 100;
+    String monthLabel = DateFormat('MMMM yyyy', 'id_ID').format(_selectedDate); 
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: Text("Rekap Keuangan", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text("Rekap Bulanan", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_ios, color: Colors.black), onPressed: () => Navigator.pop(context)),
       ),
       body: isLoading 
       ? const Center(child: CircularProgressIndicator())
@@ -77,98 +118,128 @@ class _RecapScreenState extends State<RecapScreen> {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. CARD DIAGRAM
+              // SELECTOR BULAN
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => _changeMonth(-1)),
+                    Text(monthLabel, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.chevron_right), onPressed: () => _changeMonth(1)),
+                  ],
+                ),
+              ),
+
+              // CARD CASHFLOW (Pie Chart)
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                 child: Column(
                   children: [
-                    Text("Cashflow Bulan Ini", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text("Pemasukan vs Pengeluaran", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 20),
-                    
-                    // PIE CHART
                     SizedBox(
-                      height: 200,
+                      height: 180,
                       child: totalFlow == 0 
                       ? Center(child: Text("Belum ada data", style: GoogleFonts.poppins(color: Colors.grey)))
                       : PieChart(
                         PieChartData(
-                          sectionsSpace: 2,
-                          centerSpaceRadius: 50,
+                          sectionsSpace: 2, centerSpaceRadius: 40,
                           sections: [
-                            // Section Pemasukan (Hijau)
                             PieChartSectionData(
-                              color: Colors.green,
-                              value: totalIncome,
-                              title: "${incomePercent.toStringAsFixed(0)}%",
-                              radius: 60,
-                              titleStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                              color: Colors.green, value: totalIncome, title: "", radius: 50,
                             ),
-                            // Section Pengeluaran (Merah)
                             PieChartSectionData(
-                              color: Colors.redAccent,
-                              value: totalExpense,
-                              title: "${expensePercent.toStringAsFixed(0)}%",
-                              radius: 60,
-                              titleStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                              color: Colors.redAccent, value: totalExpense, title: "", radius: 50,
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 2. DETAIL ANGKA
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoCard("Pemasukan", totalIncome, Colors.green, Icons.arrow_downward),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: _buildInfoCard("Pengeluaran", totalExpense, Colors.redAccent, Icons.arrow_upward),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // 3. CARD NETT (SELISIH)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF003973), Color(0xFF0052D4)]),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Sisa Uang (Nett)", style: GoogleFonts.poppins(color: Colors.white70)),
-                    const SizedBox(height: 5),
-                    Text(
-                      formatRupiah(totalIncome - totalExpense),
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
                     const SizedBox(height: 10),
-                    Text(
-                      (totalIncome - totalExpense) >= 0 
-                      ? "Keuanganmu aman! Pertahankan." 
-                      : "Waduh! Pengeluaran lebih besar dari pemasukan.",
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _legendItem("Masuk", Colors.green, totalIncome),
+                        const SizedBox(width: 20),
+                        _legendItem("Keluar", Colors.redAccent, totalExpense),
+                      ],
                     )
                   ],
                 ),
-              )
+              ),
+
+              const SizedBox(height: 25),
+
+              // LIST TOP PENGELUARAN (KATEGORI)
+              Text("Pengeluaran Terbesar", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+
+              _topExpenses.isEmpty
+              ? Container(
+                  width: double.infinity, padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+                  child: Center(child: Text("Belum ada pengeluaran", style: GoogleFonts.poppins(color: Colors.grey))),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _topExpenses.length,
+                  itemBuilder: (context, index) {
+                    final item = _topExpenses[index];
+                    String catName = item['category'];
+                    double amount = item['amount'];
+                    double percent = totalExpense == 0 ? 0 : (amount / totalExpense);
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: (categoryColors[catName] ?? Colors.grey).withOpacity(0.2),
+                                    radius: 15,
+                                    child: Icon(Icons.category, size: 15, color: categoryColors[catName] ?? Colors.grey),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(catName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              Text(formatRupiah(amount), style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Progress Bar
+                          LinearProgressIndicator(
+                            value: percent,
+                            backgroundColor: Colors.grey[100],
+                            color: categoryColors[catName] ?? Colors.grey,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text("${(percent * 100).toStringAsFixed(1)}%", style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                ),
+               
+               const SizedBox(height: 30),
             ],
           ),
         ),
@@ -176,33 +247,15 @@ class _RecapScreenState extends State<RecapScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, double value, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
-        border: Border(left: BorderSide(color: color, width: 4))
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 5),
-              Text(title, style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            formatRupiah(value),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+  Widget _legendItem(String label, Color color, double value) {
+    return Row(
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 5),
+        Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+        const SizedBox(width: 5),
+        Text(formatRupiah(value), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

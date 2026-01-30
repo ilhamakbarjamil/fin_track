@@ -9,7 +9,8 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('my_finance.db');
+    // _database = await _initDB('my_finance.db');
+    _database = await _initDB('sultan_finance_v2.db');
     return _database!;
   }
 
@@ -52,7 +53,8 @@ class DatabaseHelper {
         amount INTEGER NOT NULL,
         type TEXT NOT NULL,
         date TEXT NOT NULL,
-        assetId INTEGER
+        assetId INTEGER,
+        category TEXT -- Kolom Baru
       )
     ''');
 
@@ -173,5 +175,23 @@ class DatabaseHelper {
       'transactions',
       orderBy: 'date DESC',
     ); // Urutkan dari yang terbaru
+  }
+
+  // --- FITUR BAHAYA: RESET TOTAL ---
+  Future<void> resetDatabase() async {
+    final db = await instance.database;
+    // Hapus semua data di tabel
+    await db.delete('assets');
+    await db.delete('goals');
+    await db.delete('transactions');
+    
+    // Kembalikan data default (Cash)
+    await db.insert('assets', {
+      'name': 'Cash (Dompet)',
+      'balance': 0,
+      'type': 'CASH',
+      'colorCode': 0xFF9E9E9E,
+      'logoSlug': 'cash'
+    });
   }
 }

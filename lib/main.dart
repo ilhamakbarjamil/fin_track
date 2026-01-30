@@ -7,6 +7,8 @@ import 'history_screen.dart';
 import 'login_screen.dart';
 import 'recap_screen.dart';
 import 'notification_helper.dart';
+import 'profile_screen.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -14,10 +16,10 @@ import 'notification_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Setup Notifikasi
   await NotificationHelper.init();
-  
+
   runApp(const MyApp());
 }
 
@@ -53,46 +55,106 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   bool _isObscured = false;
 
   // Variabel penampung data dari Database
   List<Map<String, dynamic>> _assets = [];
   List<Map<String, dynamic>> _goals = [];
   bool _isLoading = true;
-  // Daftar Pilihan Icon Brand (Preset)
-  // DATA PRESET LOGO ASLI (URL)
-  // DATA PRESET (DENGAN OPSI LAINNYA)
+
   final List<Map<String, dynamic>> brandPresets = [
-    {'slug': 'bca', 'name': 'myBCA', 'url': 'https://logo.clearbit.com/bca.co.id', 'color': 0xFF0052D4},
-    {'slug': 'livin', 'name': 'Livin', 'url': 'https://logo.clearbit.com/bankmandiri.co.id', 'color': 0xFFFFB700},
-    {'slug': 'brimo', 'name': 'BRImo', 'url': 'https://logo.clearbit.com/bri.co.id', 'color': 0xFF00529C},
-    {'slug': 'bni', 'name': 'BNI', 'url': 'https://logo.clearbit.com/bni.co.id', 'color': 0xFFF15A23},
-    {'slug': 'jago', 'name': 'Bank Jago', 'url': 'https://logo.clearbit.com/jago.com', 'color': 0xFFF6A302},
-    {'slug': 'gopay', 'name': 'GoPay', 'url': 'https://logo.clearbit.com/gojek.com', 'color': 0xFF00AA13},
-    {'slug': 'ovo', 'name': 'OVO', 'url': 'https://logo.clearbit.com/ovo.id', 'color': 0xFF4C3494},
-    {'slug': 'shopee', 'name': 'ShopeePay', 'url': 'https://logo.clearbit.com/shopee.co.id', 'color': 0xFFEE4D2D},
-    {'slug': 'dana', 'name': 'DANA', 'url': 'https://logo.clearbit.com/dana.id', 'color': 0xFF118EE9},
-    {'slug': 'stockbit', 'name': 'Stockbit', 'url': 'https://logo.clearbit.com/stockbit.com', 'color': 0xFF212121},
-    {'slug': 'bibit', 'name': 'Bibit', 'url': 'https://logo.clearbit.com/bibit.id', 'color': 0xFF2E7D32},
-    {'slug': 'ajaib', 'name': 'Ajaib', 'url': 'https://logo.clearbit.com/ajaib.co.id', 'color': 0xFF007AFF},
-    {'slug': 'cash', 'name': 'Cash', 'url': 'CASH', 'color': 0xFF4CAF50}, // Khusus Cash
+    {
+      'slug': 'bca',
+      'name': 'myBCA',
+      'url': 'https://logo.clearbit.com/bca.co.id',
+      'color': 0xFF0052D4,
+    },
+    {
+      'slug': 'livin',
+      'name': 'Livin',
+      'url': 'https://logo.clearbit.com/bankmandiri.co.id',
+      'color': 0xFFFFB700,
+    },
+    {
+      'slug': 'brimo',
+      'name': 'BRImo',
+      'url': 'https://logo.clearbit.com/bri.co.id',
+      'color': 0xFF00529C,
+    },
+    {
+      'slug': 'bni',
+      'name': 'BNI',
+      'url': 'https://logo.clearbit.com/bni.co.id',
+      'color': 0xFFF15A23,
+    },
+    {
+      'slug': 'jago',
+      'name': 'Bank Jago',
+      'url': 'https://logo.clearbit.com/jago.com',
+      'color': 0xFFF6A302,
+    },
+    {
+      'slug': 'gopay',
+      'name': 'GoPay',
+      'url': 'https://logo.clearbit.com/gojek.com',
+      'color': 0xFF00AA13,
+    },
+    {
+      'slug': 'ovo',
+      'name': 'OVO',
+      'url': 'https://logo.clearbit.com/ovo.id',
+      'color': 0xFF4C3494,
+    },
+    {
+      'slug': 'shopee',
+      'name': 'ShopeePay',
+      'url': 'https://logo.clearbit.com/shopee.co.id',
+      'color': 0xFFEE4D2D,
+    },
+    {
+      'slug': 'dana',
+      'name': 'DANA',
+      'url': 'https://logo.clearbit.com/dana.id',
+      'color': 0xFF118EE9,
+    },
+    {
+      'slug': 'stockbit',
+      'name': 'Stockbit',
+      'url': 'https://logo.clearbit.com/stockbit.com',
+      'color': 0xFF212121,
+    },
+    {
+      'slug': 'bibit',
+      'name': 'Bibit',
+      'url': 'https://logo.clearbit.com/bibit.id',
+      'color': 0xFF2E7D32,
+    },
+    {
+      'slug': 'ajaib',
+      'name': 'Ajaib',
+      'url': 'https://logo.clearbit.com/ajaib.co.id',
+      'color': 0xFF007AFF,
+    },
+    {
+      'slug': 'cash',
+      'name': 'Cash',
+      'url': 'CASH',
+      'color': 0xFF4CAF50,
+    }, // Khusus Cash
     // OPSI BARU: LAINNYA
-    {'slug': 'other', 'name': 'Lainnya', 'url': 'OTHER', 'color': 0xFF9E9E9E}, 
+    {'slug': 'other', 'name': 'Lainnya', 'url': 'OTHER', 'color': 0xFF9E9E9E},
   ];
 
-  // --- KODE YANG HILANG (HELPER GAMBAR) ---
-
-  // 1. Helper untuk mendapatkan Image Path/URL
-  // String? _getLogoImage(String slug) {
-  //   try {
-  //     return brandPresets.firstWhere(
-  //       (element) => element['slug'] == slug,
-  //     )['image'];
-  //   } catch (e) {
-  //     return null;
-  //   }
-  // }
+  final List<Map<String, dynamic>> expenseCategories = [
+    {'name': 'Makanan', 'icon': Icons.lunch_dining, 'color': Colors.orange},
+    {'name': 'Transport', 'icon': Icons.directions_car, 'color': Colors.blue},
+    {'name': 'Belanja', 'icon': Icons.shopping_bag, 'color': Colors.pink},
+    {'name': 'Tagihan', 'icon': Icons.receipt_long, 'color': Colors.red},
+    {'name': 'Hiburan', 'icon': Icons.movie, 'color': Colors.purple},
+    {'name': 'Kesehatan', 'icon': Icons.medical_services, 'color': Colors.teal},
+    {'name': 'Pendidikan', 'icon': Icons.school, 'color': Colors.indigo},
+    {'name': 'Lainnya', 'icon': Icons.more_horiz, 'color': Colors.grey},
+  ];
 
   // 2. FUNGSI WIDGET PINTAR (Bisa baca Asset atau Network)
   // WIDGET LOGO PINTAR (Support URL, Asset, & Icon Lainnya)
@@ -105,12 +167,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (source == 'CASH') {
       return Icon(Icons.money, size: size, color: Colors.green);
     }
-    
+
     // 3. Handle URL Gambar (Internet)
     if (source != null && source.startsWith('http')) {
       return Image.network(
         source,
-        width: size, height: size, fit: BoxFit.contain,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
         errorBuilder: (ctx, err, stack) {
           // Jika gambar gagal loading, tampilkan inisial nama bank (biar gak icon rusak)
           return Icon(Icons.account_balance, size: size, color: Colors.grey);
@@ -125,7 +189,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Update juga helper getLogoImage biar sinkron dengan variabel baru 'url'
   String? _getLogoImage(String slug) {
     try {
-      return brandPresets.firstWhere((element) => element['slug'] == slug)['url'];
+      return brandPresets.firstWhere(
+        (element) => element['slug'] == slug,
+      )['url'];
     } catch (e) {
       return 'OTHER';
     }
@@ -155,10 +221,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _setupNotifications() async {
     // 1. Minta Izin (Android 13+)
     await NotificationHelper.requestPermission();
-    
+
     // 2. Jadwalkan Jam 20:00 (Malam) Setiap Hari
     // Anda bisa ubah angkanya, misal jam 8 pagi (hour: 8, minute: 0)
-    await NotificationHelper.scheduleDailyNotification(hour: 20, minute: 0); 
+    await NotificationHelper.scheduleDailyNotification(hour: 20, minute: 0);
   }
 
   // Fungsi mengambil data segar dari Database
@@ -195,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isEditMode = assetToEdit != null;
     final nameController = TextEditingController();
     final balanceController = TextEditingController();
-    
+
     // Default
     Map<String, dynamic> selectedBrand = brandPresets[0];
 
@@ -203,10 +269,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       nameController.text = assetToEdit['name'];
       balanceController.text = assetToEdit['balance'].toString();
       try {
-        selectedBrand = brandPresets.firstWhere((e) => e['slug'] == assetToEdit['logoSlug']);
+        selectedBrand = brandPresets.firstWhere(
+          (e) => e['slug'] == assetToEdit['logoSlug'],
+        );
       } catch (e) {
         // Jika tidak ada di preset (berarti custom/lainnya), set ke Other
-        selectedBrand = brandPresets.last; 
+        selectedBrand = brandPresets.last;
       }
     }
 
@@ -217,12 +285,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -230,26 +305,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
-                    
+
                     // HEADER
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(isEditMode ? "Edit Aset" : "Tambah Aset", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(
+                          isEditMode ? "Edit Aset" : "Tambah Aset",
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         if (isEditMode)
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
                             onPressed: () async {
-                               await DatabaseHelper.instance.deleteAsset(assetToEdit['id']);
-                               Navigator.pop(context);
-                               _refreshData();
+                              await DatabaseHelper.instance.deleteAsset(
+                                assetToEdit['id'],
+                              );
+                              Navigator.pop(context);
+                              _refreshData();
                             },
-                          )
+                          ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 20),
 
                     // GRID LOGO (DENGAN "LAINNYA")
@@ -257,12 +352,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: brandPresets.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4, childAspectRatio: 0.8, mainAxisSpacing: 10, crossAxisSpacing: 10,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            childAspectRatio: 0.8,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                          ),
                       itemBuilder: (context, index) {
                         final brand = brandPresets[index];
-                        final isSelected = selectedBrand['slug'] == brand['slug'];
+                        final isSelected =
+                            selectedBrand['slug'] == brand['slug'];
 
                         return InkWell(
                           onTap: () {
@@ -272,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               // Jika pilih "Lainnya", Kosongkan nama biar user ngetik
                               // Jika pilih Bank, Auto isi namanya
                               if (brand['slug'] == 'other') {
-                                nameController.clear(); 
+                                nameController.clear();
                               } else {
                                 nameController.text = brand['name'];
                               }
@@ -281,23 +381,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isSelected ? Color(brand['color']).withOpacity(0.1) : Colors.white,
+                              color: isSelected
+                                  ? Color(brand['color']).withOpacity(0.1)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: isSelected ? Color(brand['color']) : Colors.grey.shade200, width: isSelected ? 2 : 1),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Color(brand['color'])
+                                    : Colors.grey.shade200,
+                                width: isSelected ? 2 : 1,
+                              ),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                SizedBox(width: 30, height: 30, child: _buildLogoWidget(brand['url'], 30)),
+                                SizedBox(
+                                  width: 30,
+                                  height: 30,
+                                  child: _buildLogoWidget(brand['url'], 30),
+                                ),
                                 const SizedBox(height: 5),
                                 Text(
                                   brand['name'],
                                   style: GoogleFonts.poppins(
-                                    fontSize: 9, 
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected ? Color(brand['color']) : Colors.black87
+                                    fontSize: 9,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? Color(brand['color'])
+                                        : Colors.black87,
                                   ),
-                                  textAlign: TextAlign.center, maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
                                 ),
                               ],
                             ),
@@ -307,43 +423,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
 
                     const SizedBox(height: 20),
-                    
+
                     // FORM NAMA (Bisa diedit kalau pilih Lainnya)
                     TextField(
                       controller: nameController,
                       decoration: InputDecoration(
-                        labelText: "Nama Akun", 
-                        hintText: selectedBrand['slug'] == 'other' ? "Contoh: Bank Jatim / Seabank" : null,
-                        filled: true, fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        labelText: "Nama Akun",
+                        hintText: selectedBrand['slug'] == 'other'
+                            ? "Contoh: Bank Jatim / Seabank"
+                            : null,
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 15),
                     TextField(
                       controller: balanceController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyTextInputFormatter.currency(
+                          locale: 'id_ID',
+                          symbol:
+                              '', // Kita kosongkan karena prefixText sudah ada Rp
+                          decimalDigits: 0,
+                        ),
+                      ],
                       decoration: InputDecoration(
-                        labelText: "Saldo (Rp)", filled: true, fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        labelText: "Saldo (Rp)",
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
                     SizedBox(
-                      width: double.infinity, height: 55,
+                      width: double.infinity,
+                      height: 55,
                       child: ElevatedButton(
                         onPressed: () async {
-                          if (nameController.text.isNotEmpty && balanceController.text.isNotEmpty) {
+                          if (nameController.text.isNotEmpty &&
+                              balanceController.text.isNotEmpty) {
                             final data = {
                               'name': nameController.text,
-                              'balance': int.parse(balanceController.text),
+                              'balance': int.parse(
+                                balanceController.text.replaceAll('.', ''),
+                              ),
                               'type': 'BANK',
                               'colorCode': selectedBrand['color'],
-                              'logoSlug': selectedBrand['slug']
+                              'logoSlug': selectedBrand['slug'],
                             };
 
                             if (isEditMode) {
-                              await DatabaseHelper.instance.updateAsset(assetToEdit['id'], data);
+                              await DatabaseHelper.instance.updateAsset(
+                                assetToEdit['id'],
+                                data,
+                              );
                             } else {
                               await DatabaseHelper.instance.addAsset(data);
                             }
@@ -351,10 +493,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Navigator.pop(context);
                           }
                         },
-                        style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
                         child: Ink(
-                          decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF003973), Color(0xFF0052D4)]), borderRadius: BorderRadius.circular(15)),
-                          child: Container(alignment: Alignment.center, child: Text("Simpan", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF003973), Color(0xFF0052D4)],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Simpan",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -363,7 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -549,6 +711,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   labelText: "Target Harga (Rp)",
                 ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  CurrencyTextInputFormatter.currency(
+                    locale: 'id_ID',
+                    symbol: '', // Kita kosongkan karena prefixText sudah ada Rp
+                    decimalDigits: 0,
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
             ],
@@ -564,6 +733,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                CurrencyTextInputFormatter.currency(
+                  locale: 'id_ID',
+                  symbol: '', // Kita kosongkan karena prefixText sudah ada Rp
+                  decimalDigits: 0,
+                ),
+              ],
               autofocus: isSavingsMode, // Langsung muncul keyboard
             ),
           ],
@@ -577,8 +753,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () async {
               await DatabaseHelper.instance.updateGoal(goal['id'], {
                 'name': nameController.text,
-                'targetAmount': int.parse(targetController.text),
-                'currentAmount': int.parse(currentController.text),
+                'targetAmount': int.parse(
+                  targetController.text.replaceAll('.', ''),
+                ),
+                'currentAmount': int.parse(
+                  currentController.text.replaceAll('.', ''),
+                ),
                 'colorCode': goal['colorCode'], // Tetap pakai warna lama
               });
               _refreshData();
@@ -593,17 +773,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // --- 1. Dialog Tambah Transaksi (Pemasukan / Pengeluaran) ---
   // --- MODERN TRANSACTION FORM (PEMASUKAN & PENGELUARAN) ---
+  // --- FORM TRANSAKSI DENGAN KATEGORI ---
   void _showTransactionDialog(String type) {
-    // Tentukan Warna Tema: Hijau (Masuk) atau Merah (Keluar)
     final isIncome = type == 'IN';
     final themeColor = isIncome ? Colors.green : Colors.redAccent;
     final title = isIncome ? "Pemasukan Baru" : "Pengeluaran Baru";
 
     final titleController = TextEditingController();
     final amountController = TextEditingController();
-    
-    // Default aset pertama
+
     int? selectedAssetId = _assets.isNotEmpty ? _assets.first['id'] : null;
+
+    // Default Kategori (Ambil yang pertama)
+    Map<String, dynamic> selectedCategory = expenseCategories[0];
 
     showModalBottomSheet(
       context: context,
@@ -612,11 +794,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
               ),
               padding: const EdgeInsets.all(20),
               child: SingleChildScrollView(
@@ -624,63 +811,164 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. HANDLE BAR
-                    Center(child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
-                    // 2. HEADER JUDUL
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(color: themeColor.withOpacity(0.1), shape: BoxShape.circle),
-                          child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: themeColor),
+                          decoration: BoxDecoration(
+                            color: themeColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isIncome
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: themeColor,
+                          ),
                         ),
                         const SizedBox(width: 15),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text(isIncome ? "Dapat uang dari mana?" : "Uangnya buat beli apa?", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-                          ],
-                        )
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 25),
 
-                    // 3. INPUT JUDUL (e.g. Gaji)
+                    // INPUT JUDUL
                     TextField(
                       controller: titleController,
                       decoration: InputDecoration(
-                        labelText: "Judul Transaksi",
-                        hintText: isIncome ? "Contoh: Gaji Bulanan" : "Contoh: Beli Kopi",
+                        labelText: "Judul",
+                        hintText: isIncome ? "Gaji" : "Makan Siang",
                         filled: true,
                         fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.edit, color: Colors.grey, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 15),
 
-                    // 4. INPUT NOMINAL
+                    // INPUT NOMINAL
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyTextInputFormatter.currency(
+                          locale: 'id_ID',
+                          symbol:
+                              '', // Kita kosongkan karena prefixText sudah ada Rp
+                          decimalDigits: 0,
+                        ),
+                      ],
                       decoration: InputDecoration(
                         labelText: "Nominal (Rp)",
                         filled: true,
                         fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                        prefixIcon: const Padding(padding: EdgeInsets.all(15), child: Text("Rp", style: TextStyle(fontWeight: FontWeight.bold))),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 15),
 
-                    // 5. PILIH SUMBER DANA (DROPDOWN MODERN)
-                    Text("Sumber Dana:", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                    // PILIH KATEGORI (HANYA MUNCUL JIKA PENGELUARAN)
+                    if (!isIncome) ...[
+                      Text(
+                        "Kategori:",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      SizedBox(
+                        height: 50,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: expenseCategories.length,
+                          itemBuilder: (context, index) {
+                            final cat = expenseCategories[index];
+                            final isSelected =
+                                selectedCategory['name'] == cat['name'];
+                            return GestureDetector(
+                              onTap: () {
+                                setModalState(() {
+                                  selectedCategory = cat;
+                                });
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? cat['color']
+                                      : Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                alignment: Alignment.center,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      cat['icon'],
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.grey,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      cat['name'],
+                                      style: GoogleFonts.poppins(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                    ],
+
+                    // PILIH SUMBER DANA
+                    Text(
+                      "Sumber Dana:",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(15),
@@ -690,64 +978,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: DropdownButton<int>(
                           value: selectedAssetId,
                           isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down),
                           items: _assets.map((asset) {
                             return DropdownMenuItem<int>(
                               value: asset['id'],
-                              child: Row(
-                                children: [
-                                  // Logo Kecil
-                                  SizedBox(width: 24, height: 24, child: _buildLogoWidget(_getLogoImage(asset['logoSlug'] ?? 'cash'), 24)),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(asset['name'], style: GoogleFonts.poppins(fontSize: 14)),
-                                        Text("Saldo: ${formatRupiah(asset['balance'])}", style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                "${asset['name']} (${formatRupiah(asset['balance'])})",
+                                style: GoogleFonts.poppins(fontSize: 12),
                               ),
                             );
                           }).toList(),
-                          onChanged: (value) {
-                            setModalState(() {
-                              selectedAssetId = value;
-                            });
-                          },
+                          onChanged: (value) =>
+                              setModalState(() => selectedAssetId = value),
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
 
-                    // 6. TOMBOL SIMPAN (GRADIENT)
+                    // TOMBOL SIMPAN
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
                         onPressed: () async {
-                          if (titleController.text.isNotEmpty && amountController.text.isNotEmpty && selectedAssetId != null) {
-                            int amount = int.parse(amountController.text);
-                            
-                            // 1. Simpan Transaksi
+                          if (titleController.text.isNotEmpty &&
+                              amountController.text.isNotEmpty &&
+                              selectedAssetId != null) {
+                            int amount = int.parse(
+                              amountController.text.replaceAll('.', ''),
+                            );
+
                             await DatabaseHelper.instance.addTransaction({
                               'title': titleController.text,
                               'amount': amount,
                               'type': type,
                               'date': DateTime.now().toString(),
-                              'assetId': selectedAssetId
+                              'assetId': selectedAssetId,
+                              'category': isIncome
+                                  ? 'Income'
+                                  : selectedCategory['name'],
                             });
 
-                            // 2. Update Saldo
-                            final asset = _assets.firstWhere((element) => element['id'] == selectedAssetId);
-                            int current = asset['balance'];
-                            int newBalance = isIncome ? (current + amount) : (current - amount);
-
-                            await DatabaseHelper.instance.updateAssetBalance(selectedAssetId!, newBalance);
+                            // Update Saldo
+                            final asset = _assets.firstWhere(
+                              (e) => e['id'] == selectedAssetId,
+                            );
+                            int newBalance = isIncome
+                                ? (asset['balance'] + amount)
+                                : (asset['balance'] - amount);
+                            await DatabaseHelper.instance.updateAssetBalance(
+                              selectedAssetId!,
+                              newBalance,
+                            );
 
                             _refreshData();
                             Navigator.pop(context);
@@ -755,21 +1037,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
                         child: Ink(
                           decoration: BoxDecoration(
-                            // Gradient Warna sesuai Tipe (Hijau/Merah)
                             gradient: LinearGradient(
-                              colors: isIncome 
-                                ? [Colors.green, Colors.green.shade700] 
-                                : [Colors.redAccent, Colors.red],
+                              colors: isIncome
+                                  ? [Colors.green, Colors.green.shade700]
+                                  : [Colors.redAccent, Colors.red],
                             ),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Container(
                             alignment: Alignment.center,
-                            child: Text("Simpan Transaksi", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            child: Text(
+                              "Simpan Transaksi",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -779,7 +1069,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -793,17 +1083,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Agar bisa full screen & geser saat keyboard muncul
+      isScrollControlled:
+          true, // Agar bisa full screen & geser saat keyboard muncul
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Padding(
             // Padding bawah otomatis mengikuti tinggi keyboard
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
               ),
               padding: const EdgeInsets.all(20),
               child: SingleChildScrollView(
@@ -812,7 +1108,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 1. HANDLE BAR
-                    Center(child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     // 2. HEADER DENGAN ICON
@@ -820,17 +1125,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
-                          child: const Icon(Icons.stars_rounded, color: Colors.orange, size: 32),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.stars_rounded,
+                            color: Colors.orange,
+                            size: 32,
+                          ),
                         ),
                         const SizedBox(width: 15),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Goals Impian", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
-                            Text("Tentukan target barumu!", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                            Text(
+                              "Goals Impian",
+                              style: GoogleFonts.poppins(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              "Tentukan target barumu!",
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                     const SizedBox(height: 25),
@@ -843,8 +1167,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         hintText: "Contoh: iPhone 15 Pro",
                         filled: true,
                         fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.shopping_bag_outlined, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -853,12 +1183,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     TextField(
                       controller: targetController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyTextInputFormatter.currency(
+                          locale: 'id_ID',
+                          symbol:
+                              '', // Kita kosongkan karena prefixText sudah ada Rp
+                          decimalDigits: 0,
+                        ),
+                      ],
                       decoration: InputDecoration(
                         labelText: "Target Harga",
                         prefixText: "Rp ",
                         filled: true,
                         fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -867,13 +1208,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     TextField(
                       controller: currentController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyTextInputFormatter.currency(
+                          locale: 'id_ID',
+                          symbol:
+                              '', // Kita kosongkan karena prefixText sudah ada Rp
+                          decimalDigits: 0,
+                        ),
+                      ],
                       decoration: InputDecoration(
                         labelText: "Sudah Terkumpul (Opsional)",
                         hintText: "0",
                         prefixText: "Rp ",
                         filled: true,
                         fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
 
@@ -885,30 +1237,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 55,
                       child: ElevatedButton(
                         onPressed: () async {
-                          if (nameController.text.isNotEmpty && targetController.text.isNotEmpty) {
+                          if (nameController.text.isNotEmpty &&
+                              targetController.text.isNotEmpty) {
                             await DatabaseHelper.instance.addGoal({
                               'name': nameController.text,
-                              'targetAmount': int.parse(targetController.text),
-                              'currentAmount': currentController.text.isEmpty ? 0 : int.parse(currentController.text),
-                              'colorCode': 0xFF0052D4 // Default Biru
+                              'targetAmount': int.parse(
+                                targetController.text.replaceAll('.', ''),
+                              ),
+                              'currentAmount': currentController.text.isEmpty
+                                  ? 0
+                                  : int.parse(
+                                      currentController.text.replaceAll(
+                                        '.',
+                                        '',
+                                      ),
+                                    ),
+                              'colorCode': 0xFF0052D4, // Default Biru
                             });
                             _refreshData();
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Goals berhasil dibuat! Semangat nabung!"), backgroundColor: Colors.green));
+                            showModernSnackBar(
+                              "Goals berhasil dibuat! Semangat nabung!",
+                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
                         child: Ink(
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFF003973), Color(0xFF0052D4)]),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF003973), Color(0xFF0052D4)],
+                            ),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Container(
                             alignment: Alignment.center,
-                            child: Text("Mulai Wujudkan", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            child: Text(
+                              "Mulai Wujudkan",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -919,7 +1294,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -928,7 +1303,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // --- FITUR TRANSFER (FIX: ANTI OVERFLOW KEYBOARD) ---
   void _showTransferDialog() {
     if (_assets.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Minimal harus punya 2 dompet untuk transfer!"), backgroundColor: Colors.red));
+      showModernSnackBar(
+        "Minimal harus punya 2 dompet untuk transfer!",
+        isError: true,
+      );
       return;
     }
 
@@ -944,13 +1322,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context, setModalState) {
           return Padding(
             // PADDING INI MENJAMIN TAMPILAN NAIK SAAT KEYBOARD MUNCUL
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
               // BATASI TINGGI MAKSIMAL AGAR TIDAK LEPAS KE ATAS
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
               ),
               // WRAP DENGAN SCROLL VIEW AGAR BISA DISCROLL
               child: SingleChildScrollView(
@@ -959,18 +1344,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
-                    
-                    Text("Transfer Saldo", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
+
+                    Text(
+                      "Transfer Saldo",
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     // 1. DARI (SUMBER)
-                    Text("Dari Dompet:", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      "Dari Dompet:",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade300)),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int>(
                           value: sourceAsset['id'],
@@ -980,20 +1390,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               value: asset['id'],
                               child: Row(
                                 children: [
-                                  SizedBox(width: 24, height: 24, child: _buildLogoWidget(asset['logoSlug'], 24)),
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: _buildLogoWidget(
+                                      asset['logoSlug'],
+                                      24,
+                                    ),
+                                  ),
                                   const SizedBox(width: 10),
-                                  Expanded(child: Text(asset['name'], style: GoogleFonts.poppins())),
-                                  Text(formatRupiah(asset['balance']), style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                                  Expanded(
+                                    child: Text(
+                                      asset['name'],
+                                      style: GoogleFonts.poppins(),
+                                    ),
+                                  ),
+                                  Text(
+                                    formatRupiah(asset['balance']),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ],
                               ),
                             );
                           }).toList(),
                           onChanged: (value) {
                             setModalState(() {
-                              sourceAsset = _assets.firstWhere((e) => e['id'] == value);
+                              sourceAsset = _assets.firstWhere(
+                                (e) => e['id'] == value,
+                              );
                               // Auto Swap Logic
                               if (sourceAsset['id'] == destAsset['id']) {
-                                destAsset = _assets.firstWhere((e) => e['id'] != sourceAsset['id']);
+                                destAsset = _assets.firstWhere(
+                                  (e) => e['id'] != sourceAsset['id'],
+                                );
                               }
                             });
                           },
@@ -1005,16 +1437,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Icon(Icons.arrow_downward_rounded, color: Colors.blue[800], size: 28),
+                        child: Icon(
+                          Icons.arrow_downward_rounded,
+                          color: Colors.blue[800],
+                          size: 28,
+                        ),
                       ),
                     ),
 
                     // 2. KE (TUJUAN)
-                    Text("Ke Dompet:", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      "Ke Dompet:",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade300)),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int>(
                           value: destAsset['id'],
@@ -1024,19 +1470,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               value: asset['id'],
                               child: Row(
                                 children: [
-                                  SizedBox(width: 24, height: 24, child: _buildLogoWidget(asset['logoSlug'], 24)),
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: _buildLogoWidget(
+                                      asset['logoSlug'],
+                                      24,
+                                    ),
+                                  ),
                                   const SizedBox(width: 10),
-                                  Expanded(child: Text(asset['name'], style: GoogleFonts.poppins())),
+                                  Expanded(
+                                    child: Text(
+                                      asset['name'],
+                                      style: GoogleFonts.poppins(),
+                                    ),
+                                  ),
                                 ],
                               ),
                             );
                           }).toList(),
                           onChanged: (value) {
                             setModalState(() {
-                              destAsset = _assets.firstWhere((e) => e['id'] == value);
+                              destAsset = _assets.firstWhere(
+                                (e) => e['id'] == value,
+                              );
                               // Auto Swap Logic
                               if (destAsset['id'] == sourceAsset['id']) {
-                                sourceAsset = _assets.firstWhere((e) => e['id'] != destAsset['id']);
+                                sourceAsset = _assets.firstWhere(
+                                  (e) => e['id'] != destAsset['id'],
+                                );
                               }
                             });
                           },
@@ -1050,52 +1512,103 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyTextInputFormatter.currency(
+                          locale: 'id_ID',
+                          symbol: '', // Kosongkan karena sudah ada prefixText
+                          decimalDigits: 0,
+                        ),
+                      ],
                       decoration: InputDecoration(
                         labelText: "Nominal Transfer",
                         prefixText: "Rp ",
-                        filled: true, fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
-                    
+
                     // TOMBOL CONFIRM
                     SizedBox(
-                      width: double.infinity, height: 55,
+                      width: double.infinity,
+                      height: 55,
                       child: ElevatedButton(
                         onPressed: () async {
                           if (amountController.text.isNotEmpty) {
-                            int amount = int.parse(amountController.text);
-                            
+                            int amount = int.parse(
+                              amountController.text.replaceAll('.', ''),
+                            );
+
                             if (sourceAsset['balance'] < amount) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saldo tidak cukup!"), backgroundColor: Colors.red));
+                              showModernSnackBar(
+                                "Saldo sumber tidak mencukupi!",
+                                isError: true,
+                              );
                               return;
                             }
 
                             // Update Database
-                            await DatabaseHelper.instance.updateAssetBalance(sourceAsset['id'], sourceAsset['balance'] - amount);
-                            await DatabaseHelper.instance.updateAssetBalance(destAsset['id'], destAsset['balance'] + amount);
+                            await DatabaseHelper.instance.updateAssetBalance(
+                              sourceAsset['id'],
+                              sourceAsset['balance'] - amount,
+                            );
+                            await DatabaseHelper.instance.updateAssetBalance(
+                              destAsset['id'],
+                              destAsset['balance'] + amount,
+                            );
 
                             await DatabaseHelper.instance.addTransaction({
                               'title': "Transfer ke ${destAsset['name']}",
-                              'amount': amount, 'type': 'OUT', 'date': DateTime.now().toString(), 'assetId': sourceAsset['id']
+                              'amount': amount,
+                              'type': 'OUT',
+                              'date': DateTime.now().toString(),
+                              'assetId': sourceAsset['id'],
                             });
-                            
+
                             await DatabaseHelper.instance.addTransaction({
                               'title': "Terima dari ${sourceAsset['name']}",
-                              'amount': amount, 'type': 'IN', 'date': DateTime.now().toString(), 'assetId': destAsset['id']
+                              'amount': amount,
+                              'type': 'IN',
+                              'date': DateTime.now().toString(),
+                              'assetId': destAsset['id'],
                             });
 
                             _refreshData();
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Berhasil transfer Rp ${formatRupiah(amount)}"), backgroundColor: Colors.green));
+                            showModernSnackBar(
+                              "Berhasil transfer Rp ${formatRupiah(amount)}",
+                            );
                           }
                         },
-                        style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
                         child: Ink(
-                          decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF003973), Color(0xFF0052D4)]), borderRadius: BorderRadius.circular(15)),
-                          child: Container(alignment: Alignment.center, child: Text("Konfirmasi Transfer", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF003973), Color(0xFF0052D4)],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Konfirmasi Transfer",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1105,7 +1618,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
@@ -1593,9 +2106,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
       // ... SISA CODE SAMA (FAB & BottomNavBar) ...
+      // Floating Action Button (QR / Quick Add)
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          // JADI TOMBOL CEPAT CATAT PENGELUARAN
+          _showTransactionDialog('OUT');
+        },
         backgroundColor: const Color(0xFF0052D4),
         shape: const CircleBorder(),
         elevation: 5,
@@ -1634,9 +2151,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: const Icon(Icons.wallet, color: Colors.grey),
                 onPressed: () {},
               ),
+              // TOMBOL PROFIL
               IconButton(
-                icon: const Icon(Icons.person_outline, color: Colors.grey),
-                onPressed: () {},
+                icon: const Icon(
+                  Icons.person_outline,
+                  color: Colors.grey,
+                  size: 28,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  ).then(
+                    (_) => _refreshData(),
+                  ); // Refresh dashboard saat kembali dari profil (kali aja abis reset)
+                },
               ),
             ],
           ),
@@ -1664,6 +2195,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
         ),
       ],
+    );
+  }
+
+  // --- HELPER NOTIFIKASI MODERN (FLOATING) ---
+  void showModernSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            // Ikon Indikator
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isError ? Icons.error_outline : Icons.check,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 15),
+            // Teks Pesan
+            Expanded(
+              child: Text(
+                message,
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating, // Agar melayang
+        backgroundColor: isError
+            ? Colors.redAccent
+            : const Color(0xFF00AA13), // Hijau Gojek
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // Sudut membulat
+        ),
+        margin: const EdgeInsets.all(20), // Jarak dari tepi layar
+        elevation: 10, // Efek bayangan
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 }

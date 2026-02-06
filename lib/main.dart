@@ -10,18 +10,25 @@ import 'notification_helper.dart';
 import 'profile_screen.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
-// void main() {
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+
+//   // Setup Notifikasi
+//   await NotificationHelper.init();
+
 //   runApp(const MyApp());
 // }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Setup Notifikasi
-  await NotificationHelper.init();
-
+  try {
+    await NotificationHelper.init();
+  } catch (e) {
+    // log saja, jangan hentikan app
+  }
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -60,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Variabel penampung data dari Database
   List<Map<String, dynamic>> _assets = [];
   List<Map<String, dynamic>> _goals = [];
+  List<Map<String, dynamic>> _recentTransactions = [];
   bool _isLoading = true;
 
   final List<Map<String, dynamic>> brandPresets = [
@@ -218,25 +226,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Fungsi Setup Notifikasi
-  void _setupNotifications() async {
-    // 1. Minta Izin (Android 13+)
+void _setupNotifications() async {
+  try {
     await NotificationHelper.requestPermission();
-
-    // 2. Jadwalkan Jam 20:00 (Malam) Setiap Hari
-    // Anda bisa ubah angkanya, misal jam 8 pagi (hour: 8, minute: 0)
     await NotificationHelper.scheduleDailyNotification(hour: 23, minute: 10);
+  } catch (e) {
+    // log & lanjut (jangan bikin app mati)
   }
+}
+
 
   // Fungsi mengambil data segar dari Database
   void _refreshData() async {
     final dataAssets = await DatabaseHelper.instance.getAssets();
     final dataGoals = await DatabaseHelper.instance.getGoals();
+    final dataTrans = await DatabaseHelper.instance
+        .getTransactions(); // Ambil semua transaksi
 
-    setState(() {
-      _assets = dataAssets;
-      _goals = dataGoals;
-      _isLoading = false;
-    });
+    if (mounted) {
+      // Cek mounted agar tidak error jika layar ditutup
+      setState(() {
+        _assets = dataAssets;
+        _goals = dataGoals;
+        _recentTransactions = dataTrans
+            .take(5)
+            .toList(); // Ambil 5 data teratas saja
+        _isLoading = false;
+      });
+    }
   }
 
   // Fungsi Format Rupiah
@@ -1980,6 +1997,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+
+                  // LIST TRANSAKSI MINI
+                  _recentTransactions.isEmpty
+                      ? Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Center(
+                            child: Text(
+                              "Belum ada transaksi baru",
+                              style: GoogleFonts.poppins(color: Colors.grey),
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _recentTransactions.length,
+                          itemBuilder: (context, index) {
+                            final item = _recentTransactions[index];
+                            final isIncome = item['type'] == 'IN';
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.05),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  // Icon Panah
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: isIncome
+                                          ? Colors.green.withOpacity(0.1)
+                                          : Colors.red.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      isIncome
+                                          ? Icons.arrow_downward_rounded
+                                          : Icons.arrow_upward_rounded,
+                                      color: isIncome
+                                          ? Colors.green
+                                          : Colors.redAccent,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  // Judul & Tanggal
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['title'],
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        Text(
+                                          // Format tanggal simpel
+                                          item['date'].toString().substring(
+                                            0,
+                                            10,
+                                          ),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 10,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Nominal
+                                  Text(
+                                    "${isIncome ? '+' : '-'} ${formatRupiah(item['amount'])}",
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.bold,
+                                      color: isIncome
+                                          ? Colors.green
+                                          : Colors.redAccent,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                  const SizedBox(height: 20),
 
                   // LIST GOALS
                   // LIST GOALS (INTERAKTIF)

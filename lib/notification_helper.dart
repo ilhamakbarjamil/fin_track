@@ -11,6 +11,7 @@ class NotificationHelper {
 
     // Settingan Android
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // const androidSettings = AndroidInitializationSettings('notification_icon');
     // Settingan iOS (Default)
     const iosSettings = DarwinInitializationSettings();
 
